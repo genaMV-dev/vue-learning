@@ -1,140 +1,99 @@
 <script setup>
 import { computed, ref } from 'vue'
 
-const username = ref('')
-const email = ref('')
-const password = ref('')
-const age = ref(null)
-const studyMode = ref('online')
-const skills = ref([])
-const acceptTerms = ref(false)
-const isSubmitted = ref(false)
-
-const isFormValid = computed(() => {
-  return (
-    username.value.trim().length >= 2 &&
-    email.value.trim().length > 0 &&
-    password.value.length >= 8 &&
-    age.value >= 16 &&
-    age.value <= 100 &&
-    skills.value.length > 0 &&
-    acceptTerms.value === true
-  )
+const product = ref({
+  title: 'iPhone 15 Pro',
+  price: 45000,
+  stock: 7,
+  color: 'black',
 })
 
-function handleSubmit() {
-  isSubmitted.value = true
+const isFavorite = ref(false)
+const isInCart = ref(false)
+const isDark = ref(false)
 
-  if (!isFormValid.value) return
+const stockClass = computed(() => {
+  if (product.value.stock <= 0) return 'out-of-stock'
+  if (product.value.stock <= 5) return 'low-stock'
 
-  console.log(
-    `Ім'я: ${username.value},
-    Пошта: ${email.value},
-    Вік: ${age.value},
-    Спосіб навчання: ${studyMode.value},
-    Навички: ${skills.value.join(', ')}`
-  )
-
-  username.value = ''
-  email.value = ''
-  password.value = ''
-  age.value = null
-  studyMode.value = 'online'
-  skills.value = []
-  acceptTerms.value = false
-  isSubmitted.value = false
-}
+  return 'in-stock'
+})
 </script>
 
 <template>
-  <form class="registration-form" @submit.prevent="handleSubmit">
-    <p class="form-error" v-if="isSubmitted && username.trim().length < 2">
-      Ім'я повинно містити 2 або більше символа
-    </p>
-    <label class="field-label" for="username">Ім'я</label>
-    <input
-      v-model.trim="username"
-      type="text"
-      placeholder="Олексій"
-      id="username"
-    />
-
-    <p class="form-error" v-if="isSubmitted && email.trim().length === 0">
-      Пошта не може бути порожньою
-    </p>
-    <label class="field-label" for="email">Пошта</label>
-    <input
-      v-model.trim="email"
-      type="email"
-      placeholder="olexiy@gmail.com"
-      id="email"
-    />
-
-    <p class="form-error" v-if="isSubmitted && password.length < 8">
-      Пароль повинен містити 8 або більше символів
-    </p>
-    <label class="field-label" for="password">Пароль</label>
-    <input
-      v-model="password"
-      type="password"
-      placeholder="Пароль"
-      id="password"
-    />
-
-    <p class="form-error" v-if="isSubmitted && (age < 16 || age > 100)">
-      Вік повинен бути від 16 до 100 років
-    </p>
-    <label class="field-label" for="age">Вік</label>
-    <input v-model.number="age" type="number" placeholder="18" id="age" />
-
-    <label class="field-label" for="study-mode">Спосіб навчання</label>
-    <select v-model="studyMode" name="study-mode" id="study-mode">
-      <option value="online">Онлайн</option>
-      <option value="offline">Офлайн</option>
-    </select>
-
-    <p class="form-error" v-if="isSubmitted && skills.length === 0">
-      Оберіть хоча б одну навичку
-    </p>
-    <label class="field-label" for="">Навички</label>
-    <div class="checkbox-group">
-      <label class="checkbox-option" for="html">
-        <input v-model="skills" type="checkbox" value="HTML" id="html" />
-        <span>HTML</span>
-      </label>
-      <label class="checkbox-option" for="css">
-        <input v-model="skills" type="checkbox" value="CSS" id="css" />
-        <span>CSS</span>
-      </label>
-      <label class="checkbox-option" for="js">
-        <input v-model="skills" type="checkbox" value="JavaScript" id="js" />
-        <span>JavaScript</span>
-      </label>
+  <article class="product-panel" :class="[stockClass, { dark: isDark }]">
+    <h1 class="product-title">{{ product.title }}</h1>
+    <p class="product-price">{{ product.price }} грн</p>
+    <div class="product-info stock-info">
+      <p>В наявності: {{ product.stock }} шт.</p>
+      <span class="stock-indicator" aria-hidden="true">
+        <span
+          class="stock-indicator__fill"
+          :style="{
+            width: `${Math.min(Math.max(product.stock, 0) * 10, 100)}%`,
+          }"
+        ></span>
+      </span>
     </div>
+    <p class="product-info">Колір: {{ product.color }}</p>
+    <button
+      class="product-button favorite-button favoriteBtn"
+      :class="{ favorite: isFavorite }"
+      @click="isFavorite = !isFavorite"
+      :disabled="product.stock === 0"
+    >
+      {{ isFavorite ? '♥ В обраному' : '♡ Додати в обране' }}
+    </button>
 
-    <p class="form-error" v-if="isSubmitted && !acceptTerms">
-      Ви повинні погодитися з умовами
-    </p>
-    <label class="checkbox-option terms-option" for="accept-terms">
-      <input v-model="acceptTerms" type="checkbox" id="accept-terms" />
-      <span>Згода з умовами</span>
-    </label>
+    <button
+      class="product-button cart-button cartBtn"
+      :class="{ inCart: isInCart }"
+      @click="isInCart = !isInCart"
+      :disabled="product.stock === 0"
+    >
+      {{ isInCart ? 'У кошику' : 'Додати в кошик' }}
+    </button>
 
-    <button class="submit-button" type="submit">Зареєструватися</button>
-  </form>
+    <button class="product-button theme-button" @click="isDark = !isDark">
+      {{ isDark ? 'Біла тема' : 'Чорна тема' }}
+    </button>
+
+    <div class="stock-controls">
+      <button
+        class="product-button stock-button"
+        @click="product.stock = Math.max(0, product.stock - 1)"
+      >
+        Зменшити кількість товару.
+      </button>
+      <button class="product-button stock-button" @click="product.stock += 1">
+        Збільшити кількість товару.
+      </button>
+    </div>
+  </article>
 </template>
 
-<style>
-* {
-  box-sizing: border-box;
-}
+<style scoped>
+.product-panel {
+  --accent: #ff8800;
+  --accent-strong: #26800f;
+  --surface: #fff;
+  --surface-muted: #f5f7f3;
+  --text: #20251f;
+  --muted: #667064;
+  --border: #e0e7dc;
 
-body {
-  min-width: 320px;
-  min-height: 100vh;
-  margin: 0;
-  background: #f4f4f5;
-  color: #000;
+  box-sizing: border-box;
+  display: flex;
+  width: min(100% - 32px, 560px);
+  flex-direction: column;
+  gap: 12px;
+  margin: clamp(24px, 8vh, 80px) auto;
+  padding: clamp(24px, 5vw, 40px);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 20px 60px rgb(21 38 16 / 10%);
   font-family:
     Inter,
     ui-sans-serif,
@@ -143,165 +102,178 @@ body {
     BlinkMacSystemFont,
     'Segoe UI',
     sans-serif;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
 }
 
-.registration-form {
-  position: relative;
-  display: grid;
-  gap: 10px;
-  width: min(100% - 32px, 560px);
-  margin: clamp(24px, 7vh, 72px) auto;
-  padding: clamp(24px, 5vw, 40px);
+.product-panel.dark {
+  --surface: #171a17;
+  --surface-muted: #242a23;
+  --text: #f4f6f1;
+  --muted: #b0b9ab;
+  --border: #353d33;
+
+  background:
+    radial-gradient(
+      ellipse at 100% 0%,
+      rgb(38 128 15 / 20%),
+      transparent 22rem
+    ),
+    var(--surface);
+  box-shadow: 0 24px 70px rgb(0 0 0 / 32%);
+}
+
+.product-title {
+  margin: 0;
+  font-size: clamp(28px, 5vw, 38px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.product-price {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.product-panel.dark .product-price {
+  color: var(--accent);
+}
+
+.product-info {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--surface-muted);
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.stock-info p {
+  margin: 0 0 10px;
+}
+
+.stock-indicator {
+  display: block;
+  height: 10px;
   overflow: hidden;
-  border: 1px solid #e1e1e4;
-  border-radius: 24px;
-  background: #fff;
-  box-shadow: 0 20px 60px rgb(0 0 0 / 9%);
+  border-radius: 999px;
+  background: #dfe5dc;
 }
 
-.registration-form::before {
-  position: absolute;
-  inset: 0 0 auto;
-  height: 7px;
-  background: #ff8800;
-  content: '';
+.stock-indicator__fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  transition:
+    width 240ms ease,
+    background-color 240ms ease;
 }
 
-.field-label {
-  margin-top: 8px;
-  color: #2b2b3a;
+.product-panel.low-stock .stock-indicator__fill {
+  background: #ffcc00;
+}
+
+.product-panel.in-stock .stock-indicator__fill {
+  background: #26800f;
+}
+
+.product-button {
+  min-height: 46px;
+  padding: 11px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
   font-size: 14px;
   font-weight: 700;
-}
-
-.registration-form input:not([type='checkbox']),
-.registration-form select {
-  width: 100%;
-  min-height: 46px;
-  padding: 11px 13px;
-  border: 1px solid #d8d8dd;
-  border-radius: 10px;
-  background: #fafafa;
-  color: #000;
-  font: inherit;
-  transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    background-color 160ms ease;
-}
-
-.registration-form input:not([type='checkbox'])::placeholder {
-  color: #96969d;
-}
-
-.registration-form input:not([type='checkbox']):focus,
-.registration-form select:focus {
-  border-color: #ff8800;
-  outline: none;
-  background: #fff;
-  box-shadow: 0 0 0 4px rgb(255 136 0 / 16%);
-}
-
-.checkbox-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.checkbox-option {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  min-height: 42px;
-  padding: 9px 13px;
-  border: 1px solid #e1e1e4;
-  border-radius: 10px;
-  background: #fafafa;
-  color: #2b2b3a;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition:
-    border-color 160ms ease,
-    background-color 160ms ease;
-}
-
-.checkbox-option:has(input:checked) {
-  border-color: #ff8800;
-  background: #fff3e5;
-}
-
-.checkbox-option input {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  accent-color: #ff8800;
-}
-
-.terms-option {
-  justify-self: start;
-  margin-top: 2px;
-}
-
-.form-error {
-  margin: 4px 0 -4px;
-  color: #b54708;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.submit-button {
-  min-height: 50px;
-  margin-top: 12px;
-  padding: 12px 18px;
-  border: 0;
-  border-radius: 12px;
-  background: #ff8800;
-  color: #000;
-  cursor: pointer;
-  font: inherit;
-  font-weight: 800;
   transition:
     transform 160ms ease,
     background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
     box-shadow 160ms ease;
 }
 
-.submit-button:hover {
+.product-button:hover {
   transform: translateY(-2px);
-  background: #e87900;
-  box-shadow: 0 8px 18px rgb(255 136 0 / 25%);
+  border-color: var(--accent);
+  box-shadow: 0 6px 16px rgb(38 128 15 / 12%);
 }
 
-.submit-button:focus-visible,
-.checkbox-option:has(input:focus-visible) {
-  outline: 3px solid rgb(255 136 0 / 50%);
+.product-button:focus-visible {
+  outline: 3px solid rgb(255 136 0 / 55%);
   outline-offset: 3px;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+.favorite-button.favorite {
+  border-color: #ff8800;
+  background: #fff0df;
+  color: #a64e00;
 }
 
-ul,
-ol {
-  list-style: none;
+.product-panel.dark .favorite-button.favorite {
+  background: #392816;
+  color: #ffb25c;
+}
+
+.cart-button {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
+  color: #fff;
+}
+
+.cart-button:hover,
+.cart-button.inCart {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #17120b;
+}
+
+.theme-button {
+  align-self: flex-start;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.stock-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.stock-button {
+  min-height: 54px;
+  font-size: 13px;
 }
 
 @media (max-width: 480px) {
-  .registration-form {
-    gap: 8px;
-    padding: 28px 20px;
+  .product-panel {
+    gap: 10px;
+    padding: 24px 20px;
     border-radius: 18px;
+  }
+
+  .stock-controls {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .registration-form input,
-  .registration-form select,
-  .checkbox-option,
-  .submit-button {
+  .product-panel,
+  .product-button,
+  .stock-indicator__fill {
     transition: none;
   }
 }
