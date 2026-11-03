@@ -5,6 +5,7 @@ import OrdersPage from '@/pages/OrdersPage.vue'
 import ProductPage from '@/pages/ProductPage.vue'
 import ProductsPage from '@/pages/ProductsPage.vue'
 import ProfilePage from '@/pages/ProfilePage.vue'
+import CartPage from '@/pages/CartPage.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
@@ -24,6 +25,10 @@ const routes = [
   {
     path: '/about',
     component: AboutPage,
+  },
+  {
+    path: '/cart',
+    component: CartPage,
   },
   {
     path: '/profile',

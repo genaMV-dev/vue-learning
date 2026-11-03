@@ -1,4 +1,11 @@
-<script setup></script>
+<script setup>
+import { AnOutlinedShoppingCart } from '@kalimahapps/vue-icons'
+import { storeToRefs } from 'pinia'
+import { useCartStore } from '../stores/cartStore.js'
+
+const cartStore = useCartStore()
+const { totalQuantity } = storeToRefs(cartStore)
+</script>
 
 <template>
   <header>
@@ -12,6 +19,11 @@
       <RouterLink to="/products">Каталог</RouterLink>
       <RouterLink to="/about">Про нас</RouterLink>
       <RouterLink to="/profile">Профіль</RouterLink>
+
+      <RouterLink to="/cart"
+        ><AnOutlinedShoppingCart />
+        <span class="cart-count">{{ totalQuantity }}</span>
+      </RouterLink>
     </nav>
   </header>
 </template>
@@ -59,5 +71,20 @@ nav a.router-link-active {
   color: #ff7300;
   font-weight: 800;
   font-size: 36px;
+}
+
+.cart-count {
+  display: inline-flex;
+  min-width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--hover);
+  color: var(--header);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
 }
 </style>

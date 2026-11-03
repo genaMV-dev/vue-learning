@@ -1,8 +1,10 @@
 <script setup>
 import { useRoute } from 'vue-router'
 import { products } from '../data/products.js'
+import { useCartStore } from '../stores/cartStore.js'
 
 const route = useRoute()
+const cartStore = useCartStore()
 </script>
 
 <template>
@@ -25,6 +27,10 @@ const route = useRoute()
         <p>{{ product.price }} грн</p>
 
         <RouterLink :to="'/products/' + product.id">ДЕТАЛЬНІШЕ</RouterLink>
+        <p v-if="cartStore.isProductInCart(product.id)" class="in-cart-message">
+          Товар вже у кошику
+        </p>
+        <button v-else @click="cartStore.addProduct(product)" class="cartBtn">ДОДАТИ ДО КОШИКА</button>
       </li>
     </ul>
   </div>
@@ -157,5 +163,54 @@ li a:focus-visible {
 li a:focus-visible {
   outline: 2px solid var(--header);
   outline-offset: 3px;
+}
+
+.cartBtn {
+  display: inline-flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 2px solid var(--header);
+  border-radius: 8px;
+  background: var(--link-color);
+  color: var(--header);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  transition:
+    transform 0.3s ease,
+    color 0.3s ease,
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.cartBtn:hover,
+.cartBtn:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--hover);
+  background: var(--hover);
+  color: var(--header);
+  box-shadow: 0 6px 16px var(--header);
+}
+
+.cartBtn:focus-visible {
+  outline: 2px solid var(--header);
+  outline-offset: 3px;
+}
+
+li .in-cart-message {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 2px solid var(--hover);
+  border-radius: 8px;
+  background: var(--hover);
+  color: var(--header);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
 }
 </style>

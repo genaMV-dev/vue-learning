@@ -2,9 +2,11 @@
 import { useRoute, useRouter } from 'vue-router'
 import { products } from '../data/products.js'
 import { computed } from 'vue'
+import { useCartStore } from '../stores/cartStore.js'
 
 const route = useRoute()
 const router = useRouter()
+const cartStore = useCartStore()
 
 const product = computed(() => {
   return products.find((p) => p.id === Number(route.params.id))
@@ -18,6 +20,13 @@ const product = computed(() => {
     <div class="product-detail" v-else>
       <h1 class="product-title">{{ product.title }}</h1>
       <p class="product-price">{{ product.price }} грн</p>
+
+      <p v-if="cartStore.isProductInCart(product.id)" class="in-cart-message">
+        Товар вже у кошику
+      </p>
+      <button v-else class="add-cart-button" @click="cartStore.addProduct(product)">
+        Додати до кошика
+      </button>
 
       <button class="back-button" @click="router.push({ name: 'products' })">
         Назад до каталогу
@@ -71,12 +80,24 @@ const product = computed(() => {
 }
 
 .product-price {
-  margin-bottom: 36px;
+  margin-bottom: 24px;
   color: var(--header);
   font-size: clamp(24px, 3vw, 32px);
   font-weight: 600;
 }
 
+.in-cart-message {
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border: 2px solid var(--hover);
+  border-radius: 8px;
+  background: var(--hover);
+  color: var(--header);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.add-cart-button,
 .back-button {
   display: inline-flex;
   min-height: 48px;
@@ -97,6 +118,18 @@ const product = computed(() => {
     box-shadow 0.3s ease;
 }
 
+.add-cart-button {
+  margin-bottom: 12px;
+  border: 2px solid var(--header);
+  border-radius: 8px;
+  background: var(--header);
+  color: var(--link-color);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.add-cart-button:hover,
+.add-cart-button:focus-visible,
 .back-button:hover,
 .back-button:focus-visible {
   transform: translateY(-2px);
@@ -106,6 +139,7 @@ const product = computed(() => {
   box-shadow: 0 6px 16px var(--header);
 }
 
+.add-cart-button:focus-visible,
 .back-button:focus-visible {
   outline: 2px solid var(--header);
   outline-offset: 3px;
