@@ -1,30 +1,61 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
-import { products } from '../data/products.js'
-import { computed } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useCartStore } from '../stores/cartStore.js'
+import { getProductById } from '../services/productService.js'
 
 const route = useRoute()
 const router = useRouter()
 const cartStore = useCartStore()
 
-const product = computed(() => {
-  return products.find((p) => p.id === Number(route.params.id))
-})
+const product = ref(null)
+const isLoading = ref(false)
+const error = ref(null)
+
+const fetchProductById = async () => {
+  try {
+    isLoading.value = true
+    error.value = null
+
+    const id = route.params.id
+
+    const data = await getProductById(id)
+
+    product.value = data
+  } catch (err) {
+    error.value = err.message
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchProductById)
 </script>
 
 <template>
   <div class="product-page">
-    <p class="not-found" v-if="!product">Товар не знайдено!</p>
+    <p v-if="isLoading">Завантаження...</p>
+    <p class="not-found" v-else-if="error">{{ error }}</p>
 
-    <div class="product-detail" v-else>
+    <div class="product-detail" v-else-if="product">
+      <img
+        class="product-image"
+        :src="product.thumbnail"
+        :alt="product.title"
+      />
       <h1 class="product-title">{{ product.title }}</h1>
-      <p class="product-price">{{ product.price }} грн</p>
+      <p class="product-description">{{ product.description }}</p>
+      <p class="product-price">{{ product.price }} $</p>
+      <p class="product-rating">Рейтинг: {{ product.rating }}</p>
 
       <p v-if="cartStore.isProductInCart(product.id)" class="in-cart-message">
         Товар вже у кошику
       </p>
-      <button v-else class="add-cart-button" @click="cartStore.addProduct(product)">
+      <button
+        v-else
+        class="add-cart-button"
+        @click="cartStore.addProduct(product)"
+      >
         Додати до кошика
       </button>
 
@@ -32,6 +63,8 @@ const product = computed(() => {
         Назад до каталогу
       </button>
     </div>
+
+    <p class="not-found" v-else>Товар не знайдено!</p>
   </div>
 </template>
 
@@ -71,6 +104,18 @@ const product = computed(() => {
   box-shadow: 0 16px 36px var(--header);
 }
 
+.product-image {
+  display: block;
+  width: min(100%, 520px);
+  max-height: 360px;
+  align-self: center;
+  margin-bottom: 32px;
+  border: 2px solid var(--header);
+  border-radius: 10px;
+  background: var(--link-color);
+  object-fit: cover;
+}
+
 .product-title {
   margin-bottom: 20px;
   color: var(--text);
@@ -79,11 +124,30 @@ const product = computed(() => {
   line-height: 1.15;
 }
 
-.product-price {
+.product-description {
+  max-width: 760px;
   margin-bottom: 24px;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.7;
+}
+
+.product-price {
+  margin-bottom: 16px;
   color: var(--header);
   font-size: clamp(24px, 3vw, 32px);
   font-weight: 600;
+}
+
+.product-rating {
+  margin-bottom: 24px;
+  padding: 8px 12px;
+  border: 1px solid var(--header);
+  border-radius: 999px;
+  background: var(--link-color);
+  color: var(--header);
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .in-cart-message {

@@ -1,36 +1,75 @@
 <script setup>
 import { useRoute } from 'vue-router'
-import { products } from '../data/products.js'
 import { useCartStore } from '../stores/cartStore.js'
+import { onMounted, ref } from 'vue'
+import { getProducts, getSmartphones } from '../services/productService.js'
 
 const route = useRoute()
 const cartStore = useCartStore()
+
+const products = ref([])
+const isLoading = ref(false)
+const error = ref(null)
+
+const fetchProducts = async () => {
+  try {
+    isLoading.value = true
+    error.value = null
+
+    const response = await getProducts()
+    products.value = response.products
+  } catch (err) {
+    error.value = err.message
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const fetchSmartphones = async () => {
+  try {
+    isLoading.value = true
+    error.value = null
+
+    const response = await getSmartphones()
+    products.value = response.products
+  } catch (err) {
+    error.value = err.message
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchProducts)
 </script>
 
 <template>
   <div class="container">
     <div class="catalog-query">
-      <RouterLink
-        class="query-link"
-        :to="{ name: 'products', query: { category: 'phones' } }"
-      >
+      <button class="allBtn" @click="fetchProducts">Всі товари</button>
+      <button class="phonesBtn" @click="fetchSmartphones">
         Відкрити каталог телефонів
-      </RouterLink>
+      </button>
       <p v-if="route.query.category" class="query-value">
         Query-параметр category: {{ route.query.category }}
       </p>
     </div>
 
-    <ul>
+    <p v-if="isLoading">Завантаження...</p>
+    <p v-else-if="error">{{ error }}</p>
+    <ul v-else>
       <li :key="product.id" v-for="product in products">
+        <img :src="product.thumbnail" :alt="product.title" />
         <h2>{{ product.title }}</h2>
-        <p>{{ product.price }} грн</p>
+        <p>{{ product.price }} $</p>
+        <p>Рейтинг: {{ product.rating }}</p>
 
         <RouterLink :to="'/products/' + product.id">ДЕТАЛЬНІШЕ</RouterLink>
         <p v-if="cartStore.isProductInCart(product.id)" class="in-cart-message">
           Товар вже у кошику
         </p>
-        <button v-else @click="cartStore.addProduct(product)" class="cartBtn">ДОДАТИ ДО КОШИКА</button>
+        <button v-else @click="cartStore.addProduct(product)" class="cartBtn">
+          ДОДАТИ ДО КОШИКА
+        </button>
       </li>
     </ul>
   </div>
@@ -55,7 +94,7 @@ ul {
   margin-bottom: 28px;
 }
 
-.query-link {
+.phonesBtn {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
@@ -72,15 +111,39 @@ ul {
     border-color 0.3s ease;
 }
 
-.query-link:hover,
-.query-link:focus-visible {
+.allBtn {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  padding: 10px 18px;
+  border: 2px solid var(--header);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--header);
+  font-weight: 700;
+  margin-right: 24px;
+  transition:
+    transform 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.phonesBtn:hover,
+.phonesBtn:focus-visible {
   transform: translateY(-2px);
   border-color: var(--hover);
   background: var(--hover);
   color: var(--header);
 }
 
-.query-link:focus-visible {
+.allBtn:hover,
+.allBtn:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--hover);
+  color: var(--hover);
+}
+
+.phonesBtn:focus-visible {
   outline: 2px solid var(--header);
   outline-offset: 3px;
 }
