@@ -2,7 +2,8 @@
 import { useRoute } from 'vue-router'
 import { useCartStore } from '../stores/cartStore.js'
 import { onMounted, ref } from 'vue'
-import { getProducts, getSmartphones } from '../services/productService.js'
+import { getProducts } from '../services/productService.js'
+import { useProductFilters } from '../composables/useProductFilters.js'
 
 const route = useRoute()
 const cartStore = useCartStore()
@@ -10,6 +11,13 @@ const cartStore = useCartStore()
 const products = ref([])
 const isLoading = ref(false)
 const error = ref(null)
+const {
+  searchQuery,
+  selectedCategory,
+  sortBy,
+  filteredProducts,
+  resetFilters,
+} = useProductFilters(products)
 
 const fetchProducts = async () => {
   try {
@@ -25,39 +33,79 @@ const fetchProducts = async () => {
   }
 }
 
-const fetchSmartphones = async () => {
-  try {
-    isLoading.value = true
-    error.value = null
-
-    const response = await getSmartphones()
-    products.value = response.products
-  } catch (err) {
-    error.value = err.message
-  } finally {
-    isLoading.value = false
-  }
-}
-
 onMounted(fetchProducts)
 </script>
 
 <template>
   <div class="container">
     <div class="catalog-query">
-      <button class="allBtn" @click="fetchProducts">Всі товари</button>
-      <button class="phonesBtn" @click="fetchSmartphones">
+      <button
+        class="allBtn"
+        :class="{ active: selectedCategory === '' }"
+        @click="selectedCategory = ''"
+      >
+        Всі товари
+      </button>
+      <button
+        class="filterBtn"
+        :class="{ active: selectedCategory === 'smartphones' }"
+        @click="selectedCategory = 'smartphones'"
+      >
         Відкрити каталог телефонів
+      </button>
+      <button
+        class="filterBtn"
+        :class="{ active: selectedCategory === 'laptops' }"
+        @click="selectedCategory = 'laptops'"
+      >
+        Відкрити каталог ноутбуків
+      </button>
+      <button
+        class="filterBtn"
+        :class="{ active: selectedCategory === 'tablets' }"
+        @click="selectedCategory = 'tablets'"
+      >
+        Відкрити каталог планшетів
+      </button>
+      <button
+        class="filterBtn"
+        :class="{ active: selectedCategory === 'beauty' }"
+        @click="selectedCategory = 'beauty'"
+      >
+        Відкрити каталог краси
+      </button>
+      <button
+        class="filterBtn"
+        :class="{ active: selectedCategory === 'groceries' }"
+        @click="selectedCategory = 'groceries'"
+      >
+        Відкрити каталог продуктів
       </button>
       <p v-if="route.query.category" class="query-value">
         Query-параметр category: {{ route.query.category }}
       </p>
     </div>
 
+    <div class="product-controls">
+      <input
+        v-model="searchQuery"
+        class="search-input"
+        type="search"
+        placeholder="Пошук за назвою"
+      />
+      <button class="clear-search" @click="resetFilters">Очистити фільтри</button>
+      <select v-model="sortBy" class="sort-select" aria-label="Сортування за ціною">
+        <option value="none">Без сортування</option>
+        <option value="price-asc">Спочатку дешевші</option>
+        <option value="price-desc">Спочатку дорожчі</option>
+      </select>
+    </div>
+
     <p v-if="isLoading">Завантаження...</p>
     <p v-else-if="error">{{ error }}</p>
+    <p v-else-if="filteredProducts.length === 0">Товарів не знайдено</p>
     <ul v-else>
-      <li :key="product.id" v-for="product in products">
+      <li :key="product.id" v-for="product in filteredProducts">
         <img :src="product.thumbnail" :alt="product.title" />
         <h2>{{ product.title }}</h2>
         <p>{{ product.price }} $</p>
@@ -92,9 +140,13 @@ ul {
 
 .catalog-query {
   margin-bottom: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
 }
 
-.phonesBtn {
+.filterBtn {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
@@ -121,15 +173,14 @@ ul {
   background: transparent;
   color: var(--header);
   font-weight: 700;
-  margin-right: 24px;
   transition:
     transform 0.3s ease,
     color 0.3s ease,
     border-color 0.3s ease;
 }
 
-.phonesBtn:hover,
-.phonesBtn:focus-visible {
+.filterBtn:hover,
+.filterBtn:focus-visible {
   transform: translateY(-2px);
   border-color: var(--hover);
   background: var(--hover);
@@ -137,13 +188,21 @@ ul {
 }
 
 .allBtn:hover,
-.allBtn:focus-visible {
+.allBtn:focus-visible,
+.allBtn.active {
   transform: translateY(-2px);
   border-color: var(--hover);
-  color: var(--hover);
+  background: var(--hover);
+  color: var(--header);
 }
 
-.phonesBtn:focus-visible {
+.filterBtn.active {
+  border-color: var(--hover);
+  background: var(--hover);
+  color: var(--header);
+}
+
+.filterBtn:focus-visible {
   outline: 2px solid var(--header);
   outline-offset: 3px;
 }
@@ -153,6 +212,57 @@ ul {
   color: var(--text);
   font-size: 16px;
   font-weight: 600;
+}
+
+.product-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.search-input,
+.sort-select {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 2px solid var(--header);
+  border-radius: 8px;
+  background: var(--link-color);
+  color: var(--text);
+}
+
+.search-input {
+  min-width: min(100%, 260px);
+  flex: 1;
+}
+
+.search-input:focus,
+.sort-select:focus {
+  border-color: var(--hover);
+  outline: 2px solid var(--hover);
+  outline-offset: 2px;
+}
+
+.clear-search {
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 2px solid var(--header);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--header);
+  font-weight: 700;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.clear-search:hover,
+.clear-search:focus-visible {
+  border-color: var(--hover);
+  background: var(--hover);
+  color: var(--header);
 }
 
 li {
