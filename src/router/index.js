@@ -6,7 +6,9 @@ import ProductPage from '@/pages/ProductPage.vue'
 import ProductsPage from '@/pages/ProductsPage.vue'
 import ProfilePage from '@/pages/ProfilePage.vue'
 import CartPage from '@/pages/CartPage.vue'
+import LoginPage from '@/pages/LoginPage.vue'
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '../stores/authStore'
 
 const routes = [
   {
@@ -39,6 +41,17 @@ const routes = [
         component: OrdersPage,
       },
     ],
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: LoginPage,
+    meta: {
+      guestOnly: true,
+    },
   },
   {
     path: '/:pathMatch(.*)*',
@@ -49,6 +62,18 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+router.beforeEach((to) => {
+  const authStore = useAuthStore()
+
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    return { name: 'login' }
+  }
+
+  if (to.meta.guestOnly && authStore.isAuthenticated) {
+    return { name: 'products' }
+  }
 })
 
 export default router

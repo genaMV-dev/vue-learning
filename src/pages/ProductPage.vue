@@ -1,6 +1,6 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
-import { onMounted, ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useCartStore } from '../stores/cartStore.js'
 import { getProductById } from '../services/productService.js'
 
@@ -12,12 +12,10 @@ const product = ref(null)
 const isLoading = ref(false)
 const error = ref(null)
 
-const fetchProductById = async () => {
+const fetchProductById = async (id) => {
   try {
     isLoading.value = true
     error.value = null
-
-    const id = route.params.id
 
     const data = await getProductById(id)
 
@@ -29,7 +27,11 @@ const fetchProductById = async () => {
   }
 }
 
-onMounted(fetchProductById)
+watch(
+  () => route.params.id,
+  (id) => fetchProductById(id),
+  { immediate: true }
+)
 </script>
 
 <template>

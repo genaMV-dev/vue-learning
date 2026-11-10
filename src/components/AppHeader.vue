@@ -2,9 +2,19 @@
 import { AnOutlinedShoppingCart } from '@kalimahapps/vue-icons'
 import { storeToRefs } from 'pinia'
 import { useCartStore } from '../stores/cartStore.js'
+import { useAuthStore } from '../stores/authStore.js'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
+const authStore = useAuthStore()
 const cartStore = useCartStore()
 const { totalQuantity } = storeToRefs(cartStore)
+
+const handleLogout = () => {
+  authStore.logout()
+
+  router.push({ name: 'login' })
+}
 </script>
 
 <template>
@@ -18,12 +28,20 @@ const { totalQuantity } = storeToRefs(cartStore)
     <nav>
       <RouterLink to="/products">Каталог</RouterLink>
       <RouterLink to="/about">Про нас</RouterLink>
-      <RouterLink to="/profile">Профіль</RouterLink>
+      <RouterLink v-if="authStore.isAuthenticated" to="/profile"
+        >Профіль</RouterLink
+      >
 
       <RouterLink to="/cart"
         ><AnOutlinedShoppingCart />
         <span class="cart-count">{{ totalQuantity }}</span>
       </RouterLink>
+
+      <div v-if="!authStore.isAuthenticated">
+        <RouterLink class="authLink" to="/login">Увійти</RouterLink>
+      </div>
+
+      <button v-else @click="handleLogout" class="authLink">Вийти</button>
     </nav>
   </header>
 </template>
@@ -87,5 +105,25 @@ nav a.router-link-active {
   font-size: 14px;
   font-weight: 800;
   line-height: 1;
+}
+
+.authLink {
+  background-color: var(--link-color);
+  color: var(--header);
+  padding: 16px;
+  border-radius: 12px;
+  margin-left: 90px;
+  transition: 0.3s padding ease;
+  position: absolute;
+  right: 312px;
+}
+
+.authLink:hover {
+  padding: 20px;
+  color: var(--header);
+}
+
+.authLink.router-link-active {
+  display: none;
 }
 </style>
